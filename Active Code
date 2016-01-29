@@ -145,9 +145,15 @@ void loop()
 
   // Set the velocity of channel 0 to vertVel
   maestro.setTarget(0, vertVel);
-  
-  maestro.setTarget(1, basePos);
-  maestro.setTarget(2, gripPos);
+  // Only run if we want it to
+  if (digitalRead(baseLeft) == HIGH or digitalRead(baseRight) == HIGH)
+  {
+    maestro.setTarget(1, basePos);
+  }
+  if (digitalRead(gripOpen) == HIGH or digitalRead(gripClose) == HIGH)
+  {
+    maestro.setTarget(2, gripPos);
+  }
   maestro.setTarget(3, arm1Pos);
   maestro.setTarget(4, arm2Pos);
 }
