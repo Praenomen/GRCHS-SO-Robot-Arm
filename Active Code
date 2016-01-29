@@ -150,9 +150,17 @@ void loop()
   {
     maestro.setTarget(1, basePos);
   }
+  else
+  {
+    maestro.setTarget(1, maestro.getPosition(1));
+  }
   if (digitalRead(gripOpen) == HIGH or digitalRead(gripClose) == HIGH)
   {
     maestro.setTarget(2, gripPos);
+  }
+  else
+  {
+    maestro.setTarget(2, maestro.getPosition(2));
   }
   maestro.setTarget(3, arm1Pos);
   maestro.setTarget(4, arm2Pos);
