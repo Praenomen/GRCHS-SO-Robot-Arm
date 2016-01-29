@@ -19,7 +19,7 @@ int vertVel = 6000; //Should be not moving
 int basePos = 5700;
 int gripPos = 4000; 
 int arm1Pos = 4500;
-int arm2Pos = 7750;
+int arm2Pos = 7700;
 //once those numbers are confirmed change limits below (so we don't ram the arm into itself) ***********
 
 int servoSpeed = 12; // Rate of position change per delay unit of most servos
@@ -123,7 +123,7 @@ void loop()
   if (digitalRead(arm2Left) == HIGH)
   {
     arm2Pos += servoSpeed;
-    if (arm2Pos > 7750) arm2Pos = 7750;
+    if (arm2Pos > 7700) arm2Pos = 7700;
   }
   if (digitalRead(arm2Right) == HIGH)
   {
