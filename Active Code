@@ -152,6 +152,7 @@ void loop()
   }
   else
   {
+    // *Should* set the target position to the current position to limit overdrawn power
     maestro.setTarget(1, maestro.getPosition(1));
   }
   if (digitalRead(gripOpen) == HIGH or digitalRead(gripClose) == HIGH)
@@ -160,6 +161,7 @@ void loop()
   }
   else
   {
+    // *Should* set the target position to the current position to limit overdrawn power
     maestro.setTarget(2, maestro.getPosition(2));
   }
   maestro.setTarget(3, arm1Pos);
