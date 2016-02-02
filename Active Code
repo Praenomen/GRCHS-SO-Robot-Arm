@@ -150,7 +150,7 @@ void loop()
   
   // Iffs cause servos to run position change only if we're pressing that button
   
-  if (digitalRead(baseLeft) == HIGH or digitalRead(baseRight) == HIGH)
+  if (digitalRead(baseLeft) == HIGH || digitalRead(baseRight) == HIGH)
   {
     maestro.setTarget(1, basePos);
   }
@@ -159,7 +159,7 @@ void loop()
     maestro.setTarget(1, maestro.getPosition(1));
   }
   
-  if (digitalRead(gripOpen) == HIGH or digitalRead(gripClose) == HIGH)
+  if (digitalRead(gripOpen) == HIGH || digitalRead(gripClose) == HIGH)
   {
     maestro.setTarget(2, gripPos);
   }
@@ -168,7 +168,7 @@ void loop()
     maestro.setTarget(2, maestro.getPosition(2));
   }
 
-  if (digitalRead(arm1Left) == HIGH or digitalRead(arm1Right) == HIGH)
+  if (digitalRead(arm1Left) == HIGH || digitalRead(arm1Right) == HIGH)
   {
     maestro.setTarget(3, arm1Pos);
   }
@@ -177,7 +177,7 @@ void loop()
     maestro.setTarget(3, maestro.getPosition(3));
   }
 
-  if (digitalRead(arm2Left) == HIGH or digitalRead(arm2Right) == HIGH)
+  if (digitalRead(arm2Left) == HIGH || digitalRead(arm2Right) == HIGH)
   {
     maestro.setTarget(4, arm2Pos);
   }
