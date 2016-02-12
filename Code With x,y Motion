@@ -1,12 +1,11 @@
 #include <PololuMaestro.h>
 
-
 MiniMaestro maestro(Serial);
 
 const int left = 8;
 const int right = 9;
 const int up = 10;
-const int done = 11;
+const int down = 11;
 
 class xy
 {
@@ -56,6 +55,8 @@ int dist(float a, float b, float c, float d) {
 }
 
 xy segmentTarget;
+
+xy robotBase;
 
 xy calculateBaseArmEndTarget(ArmSegment _baseArm, xy _target, float _endArmLength)
 {
@@ -135,10 +136,6 @@ class RobotArm
     }
 
     //Methods
-    /*void display()
-      {
-      for (int i = 0; i < segments.length; i++) segments[i].display(i);
-      }*/
 
     int maxLength()
     {
@@ -165,41 +162,32 @@ class RobotArm
       //println("Segment Target:", segmentTarget.x, ",", segmentTarget.y, "  Base XY:", segments[0].end.x, ",", segments[0].end.y);
       segments[0].angleToBase = segments[0].angleToOrigin;
       segments[1].angleToBase = segments[1].angleToOrigin - segments[0].angleToBase + PI / 2;
+
+      /*if (dist(_baseArm.end.x, _baseArm.end.y, x1, y1) < dist(_baseArm.end.x, _baseArm.end.y, x2, y2))
+        return xy(x1, y1);
+      else
+        return xy(x2, y2);*/
     }
-
-
-    //  println("X1,Y1", x1, ",", y1);
-    //  println("X2,Y2", x2, ",", y2);
-    //  println("distance to x1, y1:", dist(_baseArm.end.x, _baseArm.end.y, x1, y1));
-    //  println("distance to x2, y2:", dist(_baseArm.end.x, _baseArm.end.y, x2, y2));
-    /*if (dist(_baseArm.end.x, _baseArm.end.y, x1, y1) < dist(_baseArm.end.x, _baseArm.end.y, x2, y2))
-      return xy(x1, y1);
-    else
-      return xy(x2, y2);*/
 };
 
-/*RobotArm robot(//Insert Length Array and xy//);*/
-float armLengths[] = {
-  75, 75
-};
-xy robotBase, globalTarget;
+float armLengths[] = {30,30};
+
+RobotArm robot(armLengths, robotBase);
+
+xy globalTarget(robot.maxLength(), robotBase.y);
 
 void setup()
 {
-  /*pinMode(right, INPUT);
+  pinMode(right, INPUT);
   pinMode(left, INPUT);
   pinMode(up, INPUT);
-  pinMode(down, INPUT);*/
-
-  //robotBase = new xy(0, 0);
-  //robot = new RobotArm(armLengths, robotBase);
-  xy globalTarget(robot.maxLength(), robotBase.y);
+  pinMode(down, INPUT);
 };
 
 
 void loop()
 {
-  /*if (digitalRead(right) == HIGH)
+  if (digitalRead(right) == HIGH)
   {
     if (dist(robot.robotBase.x, robot.robotBase.y, globalTarget.x + 1, globalTarget.y) < robot.maxLength()) globalTarget.x++;
   }
@@ -214,11 +202,8 @@ void loop()
   if (digitalRead(down) == HIGH)
   {
     if (dist(robot.robotBase.x, robot.robotBase.y, globalTarget.x, globalTarget.y - 1) < robot.maxLength()) globalTarget.y--;
-  }*/
+  }
   // Update Robot Arm Position
-  RobotArm robot.update(globalTarget);
-  //println("target:", globalTarget.x, ",", globalTarget.y);
-  //println("actual:", robot.segments[1].end.x, ",", robot.segments[1].end.y);
-  //println("Base Arm Origin:", degrees(robot.segments[0].angleToOrigin), "Base Arm Base Angle:", degrees(robot.segments[0].angleToBase), "End Arm Origin:", degrees(robot.segments[1].angleToOrigin), "End Arm Base:", degrees(robot.segments[1].angleToBase));
-
+  robot.update(globalTarget);
+}
 }
