@@ -1,0 +1,224 @@
+#include <PololuMaestro.h>
+
+
+MiniMaestro maestro(Serial);
+
+const int left = 8;
+const int right = 9;
+const int up = 10;
+const int done = 11;
+
+class xy
+{
+  public:
+    float x, y;
+    xy() {
+    }
+    xy(float _x, float _y)
+    {
+      x = _x;
+      y = _y;
+    }
+};
+
+class ArmSegment
+{
+  public:
+    xy armBase, end;
+
+    float len, angleToOrigin, angleToBase;
+
+    //Constructor
+    ArmSegment(xy _base, float _len, float _angleToOrigin)
+    {
+      //armBase = new xy();
+      armBase = _base;
+      len = _len;
+      angleToOrigin = _angleToOrigin;
+      //end = new xy();
+      end.x = armBase.x + len * cos(angleToOrigin);
+      end.y = armBase.y + len * sin(angleToOrigin);
+    }
+
+    //Methods
+
+    void update()
+    {
+      end.x = armBase.x + len * cos(angleToOrigin);
+      end.y = armBase.y + len * sin(angleToOrigin);
+    }
+};
+
+int dist(float a, float b, float c, float d) {
+  int delta;
+  delta = sqrt(sq(c - a) + sq(d - b));
+  return delta;
+}
+
+xy segmentTarget;
+
+xy calculateBaseArmEndTarget(ArmSegment _baseArm, xy _target, float _endArmLength)
+{
+  float x1 = 0;
+  float y1 = 0;
+  float x2 = 0;
+  float y2 = 0;
+  boolean switchXandY = false;
+  float A = _baseArm.armBase.x; // x of base arm
+  float B = _baseArm.armBase.y; // y of base arm
+  float C = _target.x; // target x
+  float D = _target.y; // target y
+  float L1 = _baseArm.len;
+  float L2 = _endArmLength;
+  if (abs((D - B)) < 1) switchXandY = true;
+  if (switchXandY)
+  {
+    A = _baseArm.armBase.y;
+    B = _baseArm.armBase.x;
+    C = _target.y;
+    D = _target.x;
+    L1 = _endArmLength;
+    L2 = _baseArm.len;
+  }
+  float H = (A - C) / (D - B);
+  float I = (sq(C) + sq(B) - 2 * B * D + sq(D) - sq(A) + sq(L1) - sq(L2)) / (2 * D - 2 * B);
+  //println("A:",A,"B:",B,"C:",C,"D:",D,"L1:",L1,"L2:",L2,"H:",H,"I:",I);
+
+  float a = sq(H) + 1;
+  float b = 2 * H * I - 2 * A;
+  float c = sq(I) + sq(A) - sq(L1);
+  //println("a:",a,"b:",b,"c:",c);
+
+  if (switchXandY)
+  {
+    //println("SOLVE FOR AND SUBSTITUTE FOR X");
+    y1 = (-b - sqrt(sq(b) - 4 * a * c)) / (2 * a);
+    x1 = B + sqrt(sq(L1) - sq(y1 - A));
+    if (abs(dist(x1, y1, _target.x, _target.y) - _baseArm.len) > .1) x1 = B - sqrt(sq(L1) - sq(y1 - A));
+
+    y2 = (-b + sqrt(sq(b) - 4 * a * c)) / (2 * a);
+    x2 = B + sqrt(sq(L1) - sq(y2 - A));
+    if (abs(dist(x2, y2, _target.x, _target.y) - _baseArm.len) > .1) x2 = B - sqrt(sq(L1) - sq(y2 - A));
+  } else
+  {
+    x1 = (-b + sqrt(sq(b) - 4 * a * c)) / (2 * a);
+    y1 = B + sqrt(sq(L1) - sq(x1 - A));
+    //println("distance off X1,Y1:",abs(dist(x1,y1,_target.x,_target.y)-_baseArm.len));
+    if (abs(dist(x1, y1, _target.x, _target.y) - _endArmLength) > .1) y1 = B - sqrt(sq(L1) - sq(x1 - A));
+    x2 = (-b - sqrt(sq(b) - 4 * a * c)) / (2 * a);
+    y2 = B + sqrt(sq(L1) - sq(x2 - A));
+    //println("distance off X2,Y2",abs(dist(x2,y2,_target.x,_target.y)-_baseArm.len));
+    if (abs(dist(x2, y2, _target.x, _target.y) - _endArmLength) > .1) y2 = B - sqrt(sq(L1) - sq(x2 - A));
+  }
+}
+class RobotArm
+{
+  public:
+    float lengthOfArmSegment[];
+    ArmSegment segments[];
+    xy robotBase;
+    //Constructor
+    RobotArm(float _lengths[2], xy _base)
+    {
+      float lengthOfArmSegment[2];
+      for (int i = 0; i < 2; i++) {
+        lengthOfArmSegment[i] = _lengths[i];
+      }
+      //xy base = new xy();
+      robotBase = _base;
+      //segments = new ArmSegment[2];
+
+      //segments[0] = new ArmSegment(robotBase, lengthOfArmSegment[0], 0);
+      //segments[1] = new ArmSegment(segments[0].end, lengthOfArmSegment[1], 0);
+      segments[0].angleToBase = segments[0].angleToOrigin;
+      segments[1].angleToBase = segments[1].angleToOrigin - segments[0].angleToBase + PI / 2;
+    }
+
+    //Methods
+    /*void display()
+      {
+      for (int i = 0; i < segments.length; i++) segments[i].display(i);
+      }*/
+
+    int maxLength()
+    {
+      int maxLength = 0;
+      for (int i = 0; i < 2; i++) maxLength += lengthOfArmSegment[i];
+
+      return maxLength;
+    }
+
+    void update(xy _target)
+    {
+      //xy segmentTarget = new xy();  //Target xy for segment so remaining segments can reach
+      segmentTarget = calculateBaseArmEndTarget(segments[0], _target, segments[1].len);
+      //println("calculated target:", segmentTarget.x, ",", segmentTarget.y);
+
+      if (segmentTarget.x > 0) segments[0].angleToOrigin = asin((segmentTarget.y - segments[0].armBase.y) / segments[0].len);
+      else segments[0].angleToOrigin = PI - asin((segmentTarget.y - segments[0].armBase.y) / segments[0].len);
+      segments[0].update();
+      segments[1].armBase = segments[0].end;
+      if (_target.x - segments[1].armBase.x > 0) segments[1].angleToOrigin = asin((_target.y - segments[1].armBase.y) / segments[1].len);
+      else segments[1].angleToOrigin = PI - asin((_target.y - segments[1].armBase.y) / segments[1].len);
+      segments[1].update();
+
+      //println("Segment Target:", segmentTarget.x, ",", segmentTarget.y, "  Base XY:", segments[0].end.x, ",", segments[0].end.y);
+      segments[0].angleToBase = segments[0].angleToOrigin;
+      segments[1].angleToBase = segments[1].angleToOrigin - segments[0].angleToBase + PI / 2;
+    }
+
+
+    //  println("X1,Y1", x1, ",", y1);
+    //  println("X2,Y2", x2, ",", y2);
+    //  println("distance to x1, y1:", dist(_baseArm.end.x, _baseArm.end.y, x1, y1));
+    //  println("distance to x2, y2:", dist(_baseArm.end.x, _baseArm.end.y, x2, y2));
+    /*if (dist(_baseArm.end.x, _baseArm.end.y, x1, y1) < dist(_baseArm.end.x, _baseArm.end.y, x2, y2))
+      return xy(x1, y1);
+    else
+      return xy(x2, y2);*/
+};
+
+/*RobotArm robot(//Insert Length Array and xy//);*/
+float armLengths[] = {
+  75, 75
+};
+xy robotBase, globalTarget;
+
+void setup()
+{
+  /*pinMode(right, INPUT);
+  pinMode(left, INPUT);
+  pinMode(up, INPUT);
+  pinMode(down, INPUT);*/
+
+  //robotBase = new xy(0, 0);
+  //robot = new RobotArm(armLengths, robotBase);
+  xy globalTarget(robot.maxLength(), robotBase.y);
+};
+
+
+void loop()
+{
+  /*if (digitalRead(right) == HIGH)
+  {
+    if (dist(robot.robotBase.x, robot.robotBase.y, globalTarget.x + 1, globalTarget.y) < robot.maxLength()) globalTarget.x++;
+  }
+  if (digitalRead(left) == HIGH)
+  {
+    if (dist(robot.robotBase.x, robot.robotBase.y, globalTarget.x - 1, globalTarget.y) < robot.maxLength()) globalTarget.x--;
+  }
+  if (digitalRead(up) == HIGH)
+  {
+    if (dist(robot.robotBase.x, robot.robotBase.y, globalTarget.x, globalTarget.y + 1) < robot.maxLength()) globalTarget.y++;
+  }
+  if (digitalRead(down) == HIGH)
+  {
+    if (dist(robot.robotBase.x, robot.robotBase.y, globalTarget.x, globalTarget.y - 1) < robot.maxLength()) globalTarget.y--;
+  }*/
+  // Update Robot Arm Position
+  RobotArm robot.update(globalTarget);
+  //println("target:", globalTarget.x, ",", globalTarget.y);
+  //println("actual:", robot.segments[1].end.x, ",", robot.segments[1].end.y);
+  //println("Base Arm Origin:", degrees(robot.segments[0].angleToOrigin), "Base Arm Base Angle:", degrees(robot.segments[0].angleToBase), "End Arm Origin:", degrees(robot.segments[1].angleToOrigin), "End Arm Base:", degrees(robot.segments[1].angleToBase));
+
+}
